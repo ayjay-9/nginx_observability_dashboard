@@ -1,0 +1,35 @@
+Features:
+1. log ingestion
+2. anomaly detection
+3. real-time dashboards
+4. alerting
+
+Directory
+nginx-observability-dashboard
+│
+├─ nginx/
+│
+├─ parser/
+│   parse_logs.py
+│
+├─ backend/
+│   fastapi_app.py
+│
+├─ prometheus/
+│   prometheus.yml
+│
+├─ grafana/
+│   dashboards.json
+│
+├─ docker-compose.yml
+│
+└─ frontend/
+
+Stack:
+1. NGINX
+2. Promtail
+3. Loki
+4. Prometheus
+5. Grafana
+6. Python anomaly detection
+7. Docker

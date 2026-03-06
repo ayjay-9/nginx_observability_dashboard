@@ -1,0 +1,34 @@
+{% extends "nginx_dashboard/layout.html" %}
+{% load static %}
+
+{% block title %}
+    Nginx Observability Dashboard
+{% endblock %}
+
+{% block header %}
+    <div class="jumbotron">
+        <img src="{% static 'nginx_dashboard/nginx_logo.png' %}" alt="Nginx Logo" class="mb-4">
+        <h1 class="display-4">Welcome to the Nginx Observability Dashboard, {{ request.user.username }}!</h1>
+        <p class="lead">This dashboard provides insights into the performance and health of your Nginx server.</p>
+        <hr class="my-4">
+        <p>Use the navigation menu to explore various metrics and visualizations.</p>
+    </div>
+    <a class="btn btn-danger" href="{% url 'users:logout' %}">Log out</a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Request Rate</h2>
+            <p>Monitor the number of requests per second to understand traffic patterns.</p>
+        </div>
+        <div class="col-md-4">
+            <h2>Error Rate</h2>
+            <p>Track the percentage of requests that result in errors to identify potential issues.</p>
+        </div>
+        <div class="col-md-4">
+            <h2>Response Time</h2>
+            <p>Analyze the average response time to ensure your server is performing optimally.</p>
+        </div>
+    </div>
+{% endblock %}
