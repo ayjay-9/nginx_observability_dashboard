@@ -10,140 +10,160 @@
       "type": "stat",
       "title": "Total Requests",
       "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "nginx_requests_total",
-          "legendFormat": "Requests"
-        }
-      ],
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_requests_total", "legendFormat": "Requests" }],
       "options": { "colorMode": "background", "graphMode": "none" },
-      "fieldConfig": {
-        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } } }
     },
     {
       "id": 2,
       "type": "stat",
       "title": "Unique IPs",
       "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "nginx_unique_ips_total",
-          "legendFormat": "IPs"
-        }
-      ],
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_unique_ips_total", "legendFormat": "IPs" }],
       "options": { "colorMode": "background", "graphMode": "none" },
-      "fieldConfig": {
-        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] } }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] } } }
     },
     {
       "id": 3,
       "type": "stat",
       "title": "Total Bytes Transferred",
       "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "nginx_bytes_total",
-          "legendFormat": "Bytes"
-        }
-      ],
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_bytes_total", "legendFormat": "Bytes" }],
       "options": { "colorMode": "background", "graphMode": "none" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "color": { "mode": "thresholds" },
-          "thresholds": { "steps": [{ "color": "green", "value": null }] }
-        }
-      }
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
     },
     {
       "id": 4,
       "type": "stat",
       "title": "2xx Responses",
-      "gridPos": { "x": 12, "y": 0, "w": 3, "h": 4 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "sum(nginx_requests_by_status{status=~\"2..\"})",
-          "legendFormat": "2xx"
-        }
-      ],
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "datasource": "Prometheus", "expr": "sum(nginx_requests_by_status{status=~\"2..\"})", "legendFormat": "2xx" }],
       "options": { "colorMode": "background", "graphMode": "none" },
-      "fieldConfig": {
-        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
     },
     {
       "id": 5,
       "type": "stat",
       "title": "4xx / 5xx Errors",
-      "gridPos": { "x": 15, "y": 0, "w": 3, "h": 4 },
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "datasource": "Prometheus", "expr": "sum(nginx_requests_by_status{status=~\"[45]..\"})", "legendFormat": "Errors" }],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "red", "value": null }] } } }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Anomalous IPs",
+      "description": "IPs with request volume > mean + 2x standard deviation",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_anomalous_ips_total", "legendFormat": "Anomalous IPs" }],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Request Spikes Detected",
+      "description": "1-minute windows with volume > mean + 2x standard deviation",
+      "gridPos": { "x": 0, "y": 4, "w": 4, "h": 4 },
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_request_spike_total", "legendFormat": "Spikes" }],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Error Burst Windows",
+      "description": "1-minute windows where >50% of requests returned 4xx/5xx errors",
+      "gridPos": { "x": 4, "y": 4, "w": 4, "h": 4 },
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_error_burst_total", "legendFormat": "Error Bursts" }],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Anomalous IPs — High Volume",
+      "description": "IPs flagged as anomalous (requests > mean + 2 standard deviations)",
+      "gridPos": { "x": 8, "y": 4, "w": 16, "h": 8 },
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(nginx_requests_by_status{status=~\"[45]..\"})",
-          "legendFormat": "Errors"
+          "expr": "sort_desc(nginx_anomalous_ip_requests)",
+          "legendFormat": "{{ip}}",
+          "instant": true
         }
       ],
-      "options": { "colorMode": "background", "graphMode": "none" },
+      "options": { "sortBy": [{ "displayName": "Value", "desc": true }] },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "red", "value": null }] } }
+        "defaults": {
+          "custom": { "displayMode": "color-background" },
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "orange", "value": null },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
       }
     },
     {
       "id": 6,
       "type": "barchart",
       "title": "Requests by Status Code",
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "nginx_requests_by_status",
-          "legendFormat": "{{status}}"
-        }
-      ],
-      "options": {
-        "xField": "status",
-        "orientation": "vertical"
-      }
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_requests_by_status", "legendFormat": "{{status}}" }],
+      "options": { "xField": "status", "orientation": "vertical" }
     },
     {
       "id": 7,
       "type": "barchart",
       "title": "Requests by HTTP Method",
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "nginx_requests_by_method",
-          "legendFormat": "{{method}}"
-        }
-      ],
-      "options": {
-        "xField": "method",
-        "orientation": "vertical"
-      }
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [{ "datasource": "Prometheus", "expr": "nginx_requests_by_method", "legendFormat": "{{method}}" }],
+      "options": { "xField": "method", "orientation": "vertical" }
     },
     {
       "id": 8,
       "type": "barchart",
-      "title": "Top 10 Client IPs",
-      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "topk(10, nginx_requests_by_ip)",
-          "legendFormat": "{{ip}}"
-        }
-      ],
-      "options": {
-        "xField": "ip",
-        "orientation": "vertical"
-      }
+      "title": "Top 10 Client IPs by Request Volume",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "targets": [{ "datasource": "Prometheus", "expr": "topk(10, nginx_requests_by_ip)", "legendFormat": "{{ip}}" }],
+      "options": { "xField": "ip", "orientation": "vertical" }
     }
   ]
 }
