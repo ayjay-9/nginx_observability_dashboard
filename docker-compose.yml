@@ -9,6 +9,16 @@ services:
     depends_on:
       - prometheus
 
+  nginx-exporter:
+    build: ./parser
+    ports:
+      - "9113:9113"
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+    environment:
+      - NGINX_LOG_PATH=/var/log/nginx/access.log
+      - EXPORTER_PORT=9113
+
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -25,6 +35,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
       - loki

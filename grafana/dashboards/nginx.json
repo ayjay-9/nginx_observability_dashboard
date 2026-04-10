@@ -1,0 +1,149 @@
+{
+  "title": "Nginx Observability Dashboard",
+  "uid": "nginx-obs",
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Requests",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "nginx_requests_total",
+          "legendFormat": "Requests"
+        }
+      ],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Unique IPs",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "nginx_unique_ips_total",
+          "legendFormat": "IPs"
+        }
+      ],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] } }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total Bytes Transferred",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "nginx_bytes_total",
+          "legendFormat": "Bytes"
+        }
+      ],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [{ "color": "green", "value": null }] }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "2xx Responses",
+      "gridPos": { "x": 12, "y": 0, "w": 3, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(nginx_requests_by_status{status=~\"2..\"})",
+          "legendFormat": "2xx"
+        }
+      ],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "4xx / 5xx Errors",
+      "gridPos": { "x": 15, "y": 0, "w": 3, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(nginx_requests_by_status{status=~\"[45]..\"})",
+          "legendFormat": "Errors"
+        }
+      ],
+      "options": { "colorMode": "background", "graphMode": "none" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "red", "value": null }] } }
+      }
+    },
+    {
+      "id": 6,
+      "type": "barchart",
+      "title": "Requests by Status Code",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "nginx_requests_by_status",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "options": {
+        "xField": "status",
+        "orientation": "vertical"
+      }
+    },
+    {
+      "id": 7,
+      "type": "barchart",
+      "title": "Requests by HTTP Method",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "nginx_requests_by_method",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "options": {
+        "xField": "method",
+        "orientation": "vertical"
+      }
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Top 10 Client IPs",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "topk(10, nginx_requests_by_ip)",
+          "legendFormat": "{{ip}}"
+        }
+      ],
+      "options": {
+        "xField": "ip",
+        "orientation": "vertical"
+      }
+    }
+  ]
+}
