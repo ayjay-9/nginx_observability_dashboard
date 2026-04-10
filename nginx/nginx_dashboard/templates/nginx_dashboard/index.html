@@ -1,34 +1,302 @@
 {% extends "nginx_dashboard/layout.html" %}
 {% load static %}
 
-{% block title %}
-    Nginx Observability Dashboard
-{% endblock %}
+{% block title %}Nginx Observability Dashboard{% endblock %}
 
 {% block header %}
-    <a id="logout-btn" class="btn btn-danger" href="{% url 'users:logout' %}">Log out</a>
-    <div class="jumbotron">   
-        <img src="{% static 'nginx_dashboard/nginx_logo.png' %}" alt="Nginx Logo" class="mb-4">
-        <h1 class="display-4">Welcome to the Nginx Observability Dashboard, {{ request.user.username }}!</h1>
-        <p class="lead">This dashboard provides insights into the performance and health of your Nginx server.</p>
-        <hr class="my-4">
-        <p>Use the navigation menu to explore various metrics and visualizations.</p>
-    </div>
+<a id="logout-btn" class="btn btn-danger" href="{% url 'users:logout' %}">Log out</a>
+<div class="jumbotron mb-0">
+    <img src="{% static 'nginx_dashboard/nginx_logo.png' %}" alt="Nginx Logo" class="mb-3" style="height:60px;">
+    <h1 class="display-5">Nginx Observability Dashboard</h1>
+    <p class="lead mb-0">Real-time log analysis · Anomaly detection · Geolocation</p>
+    <hr class="my-3">
+</div>
 {% endblock %}
 
 {% block body %}
-    <div class="row">
-        <div class="col-md-4">
-            <h2>Request Rate</h2>
-            <p>Monitor the number of requests per second to understand traffic patterns.</p>
-        </div>
-        <div class="col-md-4">
-            <h2>Error Rate</h2>
-            <p>Track the percentage of requests that result in errors to identify potential issues.</p>
-        </div>
-        <div class="col-md-4">
-            <h2>Response Time</h2>
-            <p>Analyze the average response time to ensure your server is performing optimally.</p>
+
+<!-- Filters + Export -->
+<div class="row align-items-end mt-3 mb-3">
+    <div class="col-md-3">
+        <label class="text-white">Filter by Status Code</label>
+        <select id="statusFilter" class="form-control bg-dark text-white border-secondary">
+            <option value="">All</option>
+            <option value="200">200</option>
+            <option value="301">301</option>
+            <option value="302">302</option>
+            <option value="400">400</option>
+            <option value="404">404</option>
+            <option value="405">405</option>
+            <option value="500">500</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="text-white">Filter by IP Address</label>
+        <input id="ipFilter" type="text" class="form-control bg-dark text-white border-secondary" placeholder="e.g. 20.171.207.17">
+    </div>
+    <div class="col-md-3 mt-3">
+        <button id="applyFilters" class="btn btn-primary mr-2">Apply Filters</button>
+        <button id="clearFilters" class="btn btn-secondary">Clear</button>
+    </div>
+    <div class="col-md-3 mt-3 text-right">
+        <a href="{% url 'nginx_dashboard:export_csv' %}" class="btn btn-success">&#8595; Export CSV Report</a>
+    </div>
+</div>
+
+<!-- Anomaly Banner -->
+<div id="anomalyBanner" class="alert alert-danger d-none mb-3" role="alert">
+    <strong>⚠ Anomalies Detected:</strong> <span id="anomalyDetail"></span>
+</div>
+
+<!-- Summary Stats Row -->
+<div class="row mb-3">
+    <div class="col-md-2 mb-2">
+        <div class="card bg-primary text-white text-center p-3 h-100">
+            <small>Total Requests</small><h3 id="stat-requests">—</h3>
         </div>
     </div>
+    <div class="col-md-2 mb-2">
+        <div class="card text-white text-center p-3 h-100" style="background:#6f42c1;">
+            <small>Unique IPs</small><h3 id="stat-ips">—</h3>
+        </div>
+    </div>
+    <div class="col-md-2 mb-2">
+        <div class="card bg-success text-white text-center p-3 h-100">
+            <small>Bytes Transferred</small><h3 id="stat-bytes">—</h3>
+        </div>
+    </div>
+    <div class="col-md-2 mb-2">
+        <div class="card bg-info text-white text-center p-3 h-100">
+            <small>2xx Responses</small><h3 id="stat-2xx">—</h3>
+        </div>
+    </div>
+    <div class="col-md-2 mb-2">
+        <div class="card bg-danger text-white text-center p-3 h-100">
+            <small>4xx / 5xx Errors</small><h3 id="stat-errors">—</h3>
+        </div>
+    </div>
+    <div class="col-md-2 mb-2">
+        <div class="card text-white text-center p-3 h-100" id="anomalyCard" style="background:#28a745;">
+            <small>Anomalous IPs</small><h3 id="stat-anomalous">—</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Anomaly Detail Stats -->
+<div class="row mb-3">
+    <div class="col-md-6 mb-2">
+        <div class="card text-white text-center p-3" style="background:#e67e22;">
+            <h6>Request Volume Spikes</h6>
+            <h2 id="stat-spikes">—</h2>
+            <small>1-minute windows with traffic &gt; mean + 2&times; std dev</small>
+        </div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="card bg-danger text-white text-center p-3">
+            <h6>Error Burst Windows</h6>
+            <h2 id="stat-bursts">—</h2>
+            <small>1-minute windows where &gt;50% of requests were errors</small>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-3">
+    <div class="col-md-6 mb-2">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-header text-white">Requests by Status Code</div>
+            <div class="card-body"><canvas id="statusChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-header text-white">Requests by HTTP Method</div>
+            <div class="card-body"><canvas id="methodChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- IP Tables -->
+<div class="row mb-3">
+    <div class="col-md-6 mb-2">
+        <div class="card bg-dark border-secondary">
+            <div class="card-header text-white">Top IPs by Request Volume</div>
+            <div class="card-body p-0">
+                <table class="table table-dark table-striped table-sm mb-0">
+                    <thead><tr><th>IP Address</th><th>Requests</th></tr></thead>
+                    <tbody id="topIPBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">Anomalous IPs — High Volume</div>
+            <div class="card-body p-0">
+                <table class="table table-dark table-sm mb-0">
+                    <thead><tr><th>IP Address</th><th>Requests</th><th>Flag</th></tr></thead>
+                    <tbody id="anomalyBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Geolocation Map -->
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-header text-white">IP Geolocation Map</div>
+    <div class="card-body p-0">
+        <div id="map" style="height:450px; border-radius:0 0 4px 4px;"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const METRICS_URL = "{% url 'nginx_dashboard:api_metrics' %}";
+const GEOIP_URL   = "{% url 'nginx_dashboard:api_geoip' %}";
+
+let statusChart = null;
+let methodChart = null;
+let map = null;
+let markersLayer = null;
+
+function formatBytes(b) {
+    if (b >= 1e9) return (b/1e9).toFixed(1) + " GB";
+    if (b >= 1e6) return (b/1e6).toFixed(1) + " MB";
+    if (b >= 1e3) return (b/1e3).toFixed(1) + " KB";
+    return b + " B";
+}
+
+function statusColor(code) {
+    if (code.startsWith("2")) return "#28a745";
+    if (code.startsWith("3")) return "#17a2b8";
+    if (code.startsWith("4")) return "#fd7e14";
+    if (code.startsWith("5")) return "#dc3545";
+    return "#6c757d";
+}
+
+function buildChart(canvasId, labels, values, colors) {
+    const ctx = document.getElementById(canvasId).getContext("2d");
+    return new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{ data: values, backgroundColor: colors, borderColor: colors, borderWidth: 1 }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: "#ccc" }, grid: { color: "#333" } },
+                y: { ticks: { color: "#ccc" }, grid: { color: "#333" } }
+            }
+        }
+    });
+}
+
+async function loadMetrics() {
+    const status = document.getElementById("statusFilter").value;
+    const ip     = document.getElementById("ipFilter").value;
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (ip)     params.set("ip", ip);
+
+    const res  = await fetch(`${METRICS_URL}?${params}`);
+    const data = await res.json();
+    const t    = data.totals;
+
+    document.getElementById("stat-requests").textContent  = t.requests.toLocaleString();
+    document.getElementById("stat-ips").textContent       = t.unique_ips.toLocaleString();
+    document.getElementById("stat-bytes").textContent     = formatBytes(t.bytes);
+    document.getElementById("stat-spikes").textContent    = t.spikes;
+    document.getElementById("stat-bursts").textContent    = t.error_bursts;
+    document.getElementById("stat-anomalous").textContent = t.anomalous_ips;
+
+    const s2xx    = Object.entries(data.by_status).filter(([k])=>k.startsWith("2")).reduce((a,[,v])=>a+v,0);
+    const sErrors = Object.entries(data.by_status).filter(([k])=>k.startsWith("4")||k.startsWith("5")).reduce((a,[,v])=>a+v,0);
+    document.getElementById("stat-2xx").textContent    = Math.round(s2xx).toLocaleString();
+    document.getElementById("stat-errors").textContent = Math.round(sErrors).toLocaleString();
+
+    const card = document.getElementById("anomalyCard");
+    card.style.background = t.anomalous_ips === 0 ? "#28a745" : t.anomalous_ips < 5 ? "#fd7e14" : "#dc3545";
+
+    const banner = document.getElementById("anomalyBanner");
+    if (t.anomalous_ips > 0 || t.error_bursts > 0 || t.spikes > 0) {
+        banner.classList.remove("d-none");
+        document.getElementById("anomalyDetail").textContent =
+            `${t.anomalous_ips} high-volume IP(s) · ${t.spikes} traffic spike(s) · ${t.error_bursts} error burst window(s)`;
+    } else {
+        banner.classList.add("d-none");
+    }
+
+    const statusLabels = Object.keys(data.by_status).sort();
+    if (statusChart) statusChart.destroy();
+    statusChart = buildChart("statusChart", statusLabels,
+        statusLabels.map(k => data.by_status[k]),
+        statusLabels.map(statusColor));
+
+    const methodLabels = Object.keys(data.by_method);
+    if (methodChart) methodChart.destroy();
+    methodChart = buildChart("methodChart", methodLabels,
+        methodLabels.map(k => data.by_method[k]),
+        ["#007bff","#28a745","#ffc107","#17a2b8","#6f42c1"].slice(0, methodLabels.length));
+
+    const ipBody = document.getElementById("topIPBody");
+    ipBody.innerHTML = "";
+    Object.entries(data.top_ips).sort((a,b)=>b[1]-a[1]).forEach(([ip,count]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${ip}</td><td>${Math.round(count).toLocaleString()}</td>`;
+        ipBody.appendChild(tr);
+    });
+
+    const anomBody = document.getElementById("anomalyBody");
+    anomBody.innerHTML = "";
+    const entries = Object.entries(data.anomalous_ips).sort((a,b)=>b[1]-a[1]);
+    if (!entries.length) {
+        anomBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-3">No anomalies detected</td></tr>';
+    } else {
+        entries.forEach(([ip, count]) => {
+            const badge = count > 500
+                ? '<span class="badge badge-danger">CRITICAL</span>'
+                : '<span class="badge badge-warning">HIGH</span>';
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${ip}</td><td>${Math.round(count).toLocaleString()}</td><td>${badge}</td>`;
+            anomBody.appendChild(tr);
+        });
+    }
+}
+
+async function loadMap() {
+    if (!map) {
+        map = L.map("map").setView([20, 0], 2);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap contributors"
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+    }
+    const res  = await fetch(GEOIP_URL);
+    const data = await res.json();
+    markersLayer.clearLayers();
+    (data.locations || []).forEach(loc => {
+        L.circleMarker([loc.lat, loc.lon], {
+            radius: 8, fillColor: "#dc3545", color: "#fff",
+            weight: 1, opacity: 1, fillOpacity: 0.8
+        })
+        .bindPopup(`<strong>${loc.ip}</strong><br>${loc.city ? loc.city+", " : ""}${loc.country}<br><em>${loc.isp}</em>`)
+        .addTo(markersLayer);
+    });
+}
+
+document.getElementById("applyFilters").addEventListener("click", loadMetrics);
+document.getElementById("clearFilters").addEventListener("click", () => {
+    document.getElementById("statusFilter").value = "";
+    document.getElementById("ipFilter").value = "";
+    loadMetrics();
+});
+
+loadMetrics();
+loadMap();
+</script>
 {% endblock %}
