@@ -2,14 +2,24 @@ body {
     color: #ffffff;
 
     header {
+        position: relative;
+
+        #logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
         .jumbotron {
             background: #1C262D;
             text-align: center;
+            
+            hr {
+                border-top: 1px solid #ffffff;
+            }
         }
 
-        hr {
-            border-top: 1px solid #ffffff;
-        }
+        
     }
     
 }

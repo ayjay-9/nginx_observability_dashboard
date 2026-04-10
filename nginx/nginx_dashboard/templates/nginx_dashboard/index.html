@@ -6,14 +6,14 @@
 {% endblock %}
 
 {% block header %}
-    <div class="jumbotron">
+    <a id="logout-btn" class="btn btn-danger" href="{% url 'users:logout' %}">Log out</a>
+    <div class="jumbotron">   
         <img src="{% static 'nginx_dashboard/nginx_logo.png' %}" alt="Nginx Logo" class="mb-4">
         <h1 class="display-4">Welcome to the Nginx Observability Dashboard, {{ request.user.username }}!</h1>
         <p class="lead">This dashboard provides insights into the performance and health of your Nginx server.</p>
         <hr class="my-4">
         <p>Use the navigation menu to explore various metrics and visualizations.</p>
     </div>
-    <a class="btn btn-danger" href="{% url 'users:logout' %}">Log out</a>
 {% endblock %}
 
 {% block body %}

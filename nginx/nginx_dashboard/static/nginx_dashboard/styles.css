@@ -1,11 +1,19 @@
 body {
   color: #ffffff;
 }
+body header {
+  position: relative;
+}
+body header #logout-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
 body header .jumbotron {
   background: #1C262D;
   text-align: center;
 }
-body header hr {
+body header .jumbotron hr {
   border-top: 1px solid #ffffff;
 }
 
