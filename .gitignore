@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Django
+nginx/db.sqlite3
+*.sqlite3
+
+# Logs
+nginx/logs/*.log
+nginx/logs/*.gz
+
+# Scripts not for repo
+add_logs.sh
+
+# Docs folder
+docs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+grafana_data/
+
+# IDE
+.vscode/
+.idea/
