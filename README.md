@@ -45,8 +45,13 @@ docker compose up --build
 ## Running Django locally (without Docker)
 
 ```bash
-source "/c/Users/Emmanuel Ayobanjo/Desktop/nginx_observability_dashboard/.venv/Scripts/activate"
-cd nginx_observability_dashboard/nginx
+# From the repo root
+python -m venv .venv
+source .venv/Scripts/activate   # Windows
+# source .venv/bin/activate     # Mac/Linux
+
+pip install -r nginx/requirements.txt
+cd nginx
 python manage.py runserver
 ```
 
