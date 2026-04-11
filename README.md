@@ -4,6 +4,42 @@ A full-stack observability platform for nginx access logs — built for the UCC 
 
 Reads nginx access logs in real time, detects anomalies, and presents everything on a custom dark-themed dashboard with charts, tables, a geolocation map, and CSV export.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    LOG["📄 nginx/logs/access.log"]
+
+    subgraph Ingestion
+        EXP["Custom Metrics Exporter\nparser/metrics_exporter.py\n:9113"]
+        PROMTAIL["Promtail\n:514"]
+    end
+
+    subgraph Storage
+        PROM["Prometheus\n:9090"]
+        LOKI["Loki\n:3100"]
+    end
+
+    subgraph Presentation
+        DJANGO["Django Dashboard\n:8000/dashboard"]
+        GRAFANA["Grafana\n:3001"]
+    end
+
+    GEOAPI["ip-api.com\n(geolocation)"]
+    BROWSER["Browser\nCharts · Map · Tables · CSV"]
+
+    LOG --> EXP
+    LOG --> PROMTAIL
+    EXP -->|"Prometheus scrape\nnginx_* metrics"| PROM
+    PROMTAIL -->|"push logs"| LOKI
+    PROM -->|"/api/v1/query"| DJANGO
+    PROM --> GRAFANA
+    LOKI --> GRAFANA
+    DJANGO -->|"ip-api.com/batch"| GEOAPI
+    GEOAPI --> DJANGO
+    DJANGO --> BROWSER
+```
+
 ## Stack
 
 | Service | Role | Port |
